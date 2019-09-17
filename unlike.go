@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,10 +10,10 @@ import (
 	"strings"
 )
 
-const API string = "https://api.twitter.com/1.1/"
-const API_TOKEN string = "https://api.twitter.com/oauth2/token"
+const API_URL string = "https://api.twitter.com/1.1/"
+const API_URL_TOKEN string = "https://api.twitter.com/oauth2/token"
 
-type TokenResp struct {
+type TokenResponse struct {
 	Type  string `json:"token_type"`
 	Token string `json:"access_token"`
 }
@@ -22,10 +23,26 @@ type User struct {
 	Name      string `json:"name"`
 	Following int    `json:"following"`
 }
+
 type Tweet struct {
 	CreatedAt string `json:"created_at"`
 	Id        int    `json:"id"`
 	User      `json:"user"`
+}
+
+type TwitterAPI struct {
+	KeyConsumer string
+	KeySecret   string
+	Token       string
+}
+
+type TwitterAPIRequest struct {
+	Headers    http.Header
+	Parameters map[string]string
+	Method     string
+	EndPoint   string
+	Body       string
+	Auth       string
 }
 
 func printHeaders(resp *http.Response) {
@@ -43,109 +60,94 @@ func printBody(resp *http.Response) {
 	fmt.Println(string(body))
 }
 
-func GenerateBearerToken(consumer, secret string) (string, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodPost, API_TOKEN, strings.NewReader("grant_type=client_credentials"))
-	if err != nil {
-		return "", err
+func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
+	if tar == nil {
+		return nil, errors.New("error: invalid resource")
 	}
 
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth(consumer, secret)
+	// Setup new HTTP client with proper method, end point, and body
+	client := &http.Client{}
+	req, err := http.NewRequest(tar.Method, tar.EndPoint, strings.NewReader(tar.Body))
+	if err != nil {
+		return nil, err
+	}
+
+	// Set HTTP headers
+	if tar.Headers != nil {
+		req.Header = tar.Headers
+	}
+
+	// Set HTTP basic auth if needed
+	if tar.Auth == "basic" {
+		req.SetBasicAuth(ta.KeyConsumer, ta.KeySecret)
+	}
+
+        if tar.Auth == "application" {
+                req.Header.Add("Authorization", "Bearer "+ta.Token)
+        }
+
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var tr TokenResp
-	err = json.Unmarshal(body, &tr)
-	if err != nil {
-		return "", err
-	}
-
-	return tr.Token, nil
+	return body, nil
 }
 
-func GetLikedTweetIds(token string, name string, count int, max int) ([]Tweet, error) {
-	endPoint := ""
-	if max == 0 {
-		endPoint = fmt.Sprintf("%sfavorites/list.json?count=%d&screen_name=%s", API, count, name)
-	} else {
-		endPoint = fmt.Sprintf("%sfavorites/list.json?count=%d&screen_name=%s&max_id=%d", API, count, name, max)
-	}
+func UnmarshalToken(b []byte) string {
+	var tr TokenResponse
+	json.Unmarshal(b, &tr)
 
-	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodGet, endPoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println(string(body))
-
-	var tweets []Tweet
-	err = json.Unmarshal(body, &tweets)
-	if err != nil {
-		return nil, err
-	}
-
-	return tweets, nil
+	return tr.Token
 }
 
-func UnlikeTweet(token string, id int) error {
-	endPoint := fmt.Sprintf("%sfavorites/destroy.json?id=%d", API, id)
-	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodPost, endPoint, nil)
-	if err != nil {
-		return err
+func NewRequest(resource string, parameters map[string]string) *TwitterAPIRequest {
+
+	params := ""
+	for k, v := range parameters {
+		params += fmt.Sprintf("%s=%s&", k, v)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
+	switch resource {
+	case "oauth2/token":
+		tarHeaders := http.Header{}
+		tarHeaders.Add("Content-Type", "application/x-www-form-urlencoded")
+		return &TwitterAPIRequest{
+			Method:   http.MethodPost,
+			EndPoint: API_URL_TOKEN,
+			Body:     "grant_type=client_credentials",
+			Headers:  tarHeaders,
+			Auth:     "basic",
+		}
+	case "favorites/list":
+		return &TwitterAPIRequest{
+			Method:   http.MethodGet,
+			EndPoint: API_URL + resource + ".json?" + params,
+			Auth:     "application",
+		}
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(body))
 
 	return nil
 }
 
 func main() {
-	token, err := GenerateBearerToken(KEY_CONSUMER, KEY_SECRET)
+	ta := &TwitterAPI{
+		KeyConsumer: "",
+		KeySecret:   "",
+	}
+
+	btoken, err := ta.Request(NewRequest("oauth2/token", nil))
 	if err != nil {
 		log.Println(err)
 	}
 
-	i := 0
-	var tweets []Tweet
-	tweets, _ = GetLikedTweetIds(token, "imwally", 2, 0)
-	for _, tweet := range tweets {
-		fmt.Printf("%d: %s\t%d\t%v\n", i, tweet.CreatedAt, tweet.Id, tweet.User)
-		i++
-	}
+	ta.Token = UnmarshalToken(btoken)
 
+        fmt.Println(ta)
 }
