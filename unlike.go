@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -82,10 +84,9 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 		req.SetBasicAuth(ta.KeyConsumer, ta.KeySecret)
 	}
 
-        if tar.Auth == "application" {
-                req.Header.Add("Authorization", "Bearer "+ta.Token)
-        }
-
+	if tar.Auth == "application" {
+		req.Header.Add("Authorization", "Bearer "+ta.Token)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -108,7 +109,6 @@ func UnmarshalToken(b []byte) string {
 }
 
 func NewRequest(resource string, parameters map[string]string) *TwitterAPIRequest {
-
 	params := ""
 	for k, v := range parameters {
 		params += fmt.Sprintf("%s=%s&", k, v)
@@ -131,23 +131,40 @@ func NewRequest(resource string, parameters map[string]string) *TwitterAPIReques
 			EndPoint: API_URL + resource + ".json?" + params,
 			Auth:     "application",
 		}
+	case "favorites/destroy":
+		return &TwitterAPIRequest{
+			Method:   http.MethodPost,
+			EndPoint: API_URL + resource + ".json?" + params,
+			Auth:     "application",
+		}
 	}
 
 	return nil
 }
 
+var KeyConsumer string
+var KeySecret string
+var AccessTokenSecret string
+var AccessToken string
+
+func init() {
+	// Setup flags
+	flag.StringVar(&KeyConsumer, "consumer", "", "Twitter API Consumer Key")
+	flag.StringVar(&KeySecret, "secret", "", "Twitter API Secret Key")
+	flag.StringVar(&AccessToken, "accesstoken", "", "Twitter API Access Token")
+	flag.StringVar(&AccessTokenSecret, "accesstokensecret", "", "Twitter API Access Token Secret")
+	flag.Parse()
+}
+
 func main() {
-	ta := &TwitterAPI{
-		KeyConsumer: "",
-		KeySecret:   "",
+	if KeySecret == "" {
+		fmt.Println("error: no secret key set")
+		os.Exit(2)
 	}
 
-	btoken, err := ta.Request(NewRequest("oauth2/token", nil))
-	if err != nil {
-		log.Println(err)
+	if KeyConsumer == "" {
+		fmt.Println("error: no consumer key set")
+		os.Exit(2)
 	}
 
-	ta.Token = UnmarshalToken(btoken)
-
-        fmt.Println(ta)
 }
