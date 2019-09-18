@@ -203,6 +203,7 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 
 	return body, nil
 }
+
 func NewRequest(resource string, parameters map[string]string) *TwitterAPIRequest {
 	switch resource {
 	case "oauth2/token":
