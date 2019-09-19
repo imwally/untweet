@@ -32,13 +32,18 @@ type TokenResponse struct {
 type User struct {
 	Id        int    `json:"id"`
 	Name      string `json:"name"`
-	Following int    `json:"following"`
+	Following bool   `json:"following"`
+}
+
+type URL struct {
+	FullURL string `json:"url"`
 }
 
 type Tweet struct {
 	CreatedAt string `json:"created_at"`
 	Id        int    `json:"id"`
 	User      `json:"user"`
+	URL       `json:"urls"`
 }
 
 type TwitterAPI struct {
@@ -148,9 +153,26 @@ func GenerateOauthSignature(ta *TwitterAPI, tar *TwitterAPIRequest, nonce string
 	return sig
 }
 
+func (ta *TwitterAPI) GetLikes(sn string) ([]Tweet, error) {
+	params := make(map[string]string)
+	params["screen_name"] = sn
+	params["count"] = "200"
+
+	req := NewRequest("favorites/list", params)
+	likes, err := ta.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var tweets []Tweet
+	json.Unmarshal(likes, &tweets)
+
+	return tweets, nil
+}
+
 func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 	if tar == nil {
-		return nil, errors.New("error: invalid resource")
+		return nil, errors.New("error: unsupported resource")
 	}
 
 	client := &http.Client{}
@@ -196,6 +218,8 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 		return nil, err
 	}
 
+	PrintHeaders(resp)
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -210,17 +234,19 @@ func NewRequest(resource string, parameters map[string]string) *TwitterAPIReques
 		tarHeaders := http.Header{}
 		tarHeaders.Add("Content-Type", "application/x-www-form-urlencoded")
 		return &TwitterAPIRequest{
-			Method:   http.MethodPost,
-			EndPoint: API_URL_TOKEN,
-			Body:     "grant_type=client_credentials",
-			Headers:  tarHeaders,
-			Auth:     "basic",
+			Parameters: parameters,
+			Method:     http.MethodPost,
+			EndPoint:   API_URL_TOKEN,
+			Body:       "grant_type=client_credentials",
+			Headers:    tarHeaders,
+			Auth:       "basic",
 		}
 	case "favorites/list":
 		return &TwitterAPIRequest{
-			Method:   http.MethodGet,
-			EndPoint: API_URL + resource + ".json?" + GenerateParameterString(parameters, false),
-			Auth:     "application",
+			Parameters: parameters,
+			Method:     http.MethodGet,
+			EndPoint:   API_URL + resource + ".json?" + GenerateParameterString(parameters, false),
+			Auth:       "oauth",
 		}
 	case "favorites/destroy":
 		return &TwitterAPIRequest{
@@ -240,7 +266,6 @@ var AccessToken string
 var AccessTokenSecret string
 
 func init() {
-	// Setup flags
 	flag.StringVar(&KeyConsumer, "consumer", "", "Twitter API Consumer Key")
 	flag.StringVar(&KeySecret, "secret", "", "Twitter API Secret Key")
 	flag.StringVar(&AccessToken, "accesstoken", "", "Twitter API Access Token")
@@ -276,5 +301,12 @@ func main() {
 		AccessTokenSecret: AccessTokenSecret,
 	}
 
-	fmt.Println(ta)
+	likes, err := ta.GetLikes("imwally")
+	if err != nil {
+		fmt.Println("error", err)
+	}
+
+	for _, like := range likes {
+		fmt.Println(like)
+	}
 }
