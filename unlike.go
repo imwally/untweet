@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -67,5 +68,33 @@ func main() {
 
 		fmt.Println(string(output))
 		return
+	}
+
+	for max, next := 0, 1; next > 0; {
+		batch, err := ta.GetBatchedLikes("imwally", max)
+		if err != nil {
+			log.Println(err)
+		}
+
+		for _, like := range batch {
+			if KeepFollowing && like.Following {
+				log.Println("keeping", like.Id)
+				continue
+			}
+
+			log.Println("destroying", like.Id)
+
+			err := ta.DestroyLike(like.Id)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
+		blen := len(batch)
+		if blen > 0 {
+			max = batch[blen-1].Id - 1
+		}
+
+		next = blen
 	}
 }

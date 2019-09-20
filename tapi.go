@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -18,15 +19,17 @@ import (
 const apiURL string = "https://api.twitter.com/1.1/"
 
 type User struct {
-	Id        int    `json:"id"`
-	Name      string `json:"name"`
-	Following bool   `json:"following"`
+	Id          int    `json:"id"`
+	ScreenName  string `json:"screen_name"`
+	DisplayName string `json:"name"`
+	Following   bool   `json:"following"`
 }
 
 type Tweet struct {
 	CreatedAt string `json:"created_at"`
 	Id        int    `json:"id"`
 	User      `json:"user"`
+	URL       string
 }
 
 type TwitterAPI struct {
@@ -96,7 +99,7 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 		}
 
 		ts := strconv.FormatInt(time.Now().Unix(), 10)
-		sig := GenerateOauthSignature(ta, tar, nonce, ts)
+		sig := ta.GenerateOauthSignature(tar, nonce, ts)
 
 		header := "OAuth "
 		header += fmt.Sprintf("%s=\"%s\", ", "oauth_consumer_key", ta.KeyConsumer)
@@ -117,17 +120,17 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 	if resp.Header.Get("X-Rate-Limit-Remaining") == "0" {
 		resetHeader := resp.Header.Get("X-Rate-Limit-Reset")
 		unixTime, err := strconv.ParseInt(resetHeader, 0, 64)
-                if err != nil {
-			fmt.Println(err)
+		if err != nil {
+			log.Println(err)
 		}
 
 		resetTime := time.Unix(unixTime, 0)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		until := time.Until(resetTime)
 
-		fmt.Println("rate limit hit, waiting", until, "...")
+		log.Println("hit rate limit, waiting until", resetTime, "to proceed")
 		time.Sleep(until)
 
 		return ta.Request(tar)
@@ -141,13 +144,14 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 	return body, nil
 }
 
-func (ta *TwitterAPI) getLikes(sn string, count int, max int) ([]Tweet, error) {
+func (ta *TwitterAPI) GetBatchedLikes(sn string, maxId int) ([]Tweet, error) {
 	params := make(map[string]string)
+	params["include_entities"] = "true"
 	params["screen_name"] = sn
-	params["count"] = strconv.Itoa(count)
+	params["count"] = "200"
 
-	if max > 0 {
-		params["max_id"] = strconv.Itoa(max)
+	if maxId > 0 {
+		params["max_id"] = strconv.Itoa(maxId)
 	}
 
 	req := NewRequest("favorites/list", params)
@@ -163,30 +167,45 @@ func (ta *TwitterAPI) getLikes(sn string, count int, max int) ([]Tweet, error) {
 }
 
 func (ta *TwitterAPI) GetLikes(sn string) ([]Tweet, error) {
-	likes, err := ta.getLikes(sn, 30, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println("Got", len(likes), "likes so far ...")
-	for next := 1; next > 0; {
-		max := likes[len(likes)-1].Id
-		batch, err := ta.getLikes(sn, 30, max-1)
+	var likes []Tweet
+	for max, next := 0, 1; next > 0; {
+		batch, err := ta.GetBatchedLikes(sn, max)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, like := range batch {
+			like.URL = fmt.Sprintf("https://twitter.com/%s/status/%d", like.ScreenName, like.Id)
 			likes = append(likes, like)
 		}
 
-		next = len(batch)
-		fmt.Println("Got", len(likes), "likes so far ...")
+		log.Println("gathered", len(likes), "likes")
+
+		blen := len(batch)
+		if blen > 0 {
+			max = batch[blen-1].Id - 1
+		}
+
+		next = blen
 	}
 
 	return likes, nil
 }
 
+func (ta *TwitterAPI) DestroyLike(id int) error {
+	params := make(map[string]string)
+	params["id"] = strconv.Itoa(id)
+
+	log.Printf("destroying tweet %d\n", id)
+	req := NewRequest("favorites/destroy", params)
+
+	_, err := ta.Request(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func NewRequest(resource string, parameters map[string]string) *TwitterAPIRequest {
 	switch resource {
