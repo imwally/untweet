@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const API_URL string = "https://api.twitter.com/1.1/"
+const apiURL string = "https://api.twitter.com/1.1/"
 
 type User struct {
 	Id        int    `json:"id"`
@@ -46,7 +46,7 @@ type TwitterAPIRequest struct {
 	Auth       string
 }
 
-func GenerateOauthSignature(ta *TwitterAPI, tar *TwitterAPIRequest, nonce string, ts string) string {
+func (ta *TwitterAPI) GenerateOauthSignature(tar *TwitterAPIRequest, nonce string, ts string) string {
 	params := make(map[string]string)
 	for k, v := range tar.Parameters {
 		params[k] = v
@@ -72,6 +72,73 @@ func GenerateOauthSignature(ta *TwitterAPI, tar *TwitterAPIRequest, nonce string
 	sig := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
 	return sig
+}
+
+func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
+	if tar == nil {
+		return nil, errors.New("error: unsupported resource")
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest(tar.Method, tar.EndPoint, strings.NewReader(tar.Body))
+	if err != nil {
+		return nil, err
+	}
+
+	if tar.Headers != nil {
+		req.Header = tar.Headers
+	}
+
+	if tar.Auth == "oauth" {
+		nonce, err := GenerateNonce()
+		if err != nil {
+			return nil, err
+		}
+
+		ts := strconv.FormatInt(time.Now().Unix(), 10)
+		sig := GenerateOauthSignature(ta, tar, nonce, ts)
+
+		header := "OAuth "
+		header += fmt.Sprintf("%s=\"%s\", ", "oauth_consumer_key", ta.KeyConsumer)
+		header += fmt.Sprintf("%s=\"%s\", ", "oauth_nonce", nonce)
+		header += fmt.Sprintf("%s=\"%s\", ", "oauth_signature", url.QueryEscape(sig))
+		header += fmt.Sprintf("%s=\"%s\", ", "oauth_signature_method", "HMAC-SHA1")
+		header += fmt.Sprintf("%s=\"%s\", ", "oauth_timestamp", ts)
+		header += fmt.Sprintf("%s=\"%s\", ", "oauth_token", ta.AccessToken)
+		header += fmt.Sprintf("%s=\"%s\"", "oauth_version", "1.0")
+		req.Header.Add("authorization", header)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Header.Get("X-Rate-Limit-Remaining") == "0" {
+		resetHeader := resp.Header.Get("X-Rate-Limit-Reset")
+		unixTime, err := strconv.ParseInt(resetHeader, 0, 64)
+                if err != nil {
+			fmt.Println(err)
+		}
+
+		resetTime := time.Unix(unixTime, 0)
+		if err != nil {
+			fmt.Println(err)
+		}
+		until := time.Until(resetTime)
+
+		fmt.Println("rate limit hit, waiting", until, "...")
+		time.Sleep(until)
+
+		return ta.Request(tar)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func (ta *TwitterAPI) getLikes(sn string, count int, max int) ([]Tweet, error) {
@@ -120,69 +187,6 @@ func (ta *TwitterAPI) GetLikes(sn string) ([]Tweet, error) {
 	return likes, nil
 }
 
-func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
-	if tar == nil {
-		return nil, errors.New("error: unsupported resource")
-	}
-
-	client := &http.Client{}
-	req, err := http.NewRequest(tar.Method, tar.EndPoint, strings.NewReader(tar.Body))
-	if err != nil {
-		return nil, err
-	}
-
-	if tar.Headers != nil {
-		req.Header = tar.Headers
-	}
-
-	if tar.Auth == "oauth" {
-		nonce, err := GenerateNonce()
-		if err != nil {
-			return nil, err
-		}
-
-		ts := strconv.FormatInt(time.Now().Unix(), 10)
-		sig := GenerateOauthSignature(ta, tar, nonce, ts)
-
-		header := "OAuth "
-		header += fmt.Sprintf("%s=\"%s\", ", "oauth_consumer_key", ta.KeyConsumer)
-		header += fmt.Sprintf("%s=\"%s\", ", "oauth_nonce", nonce)
-		header += fmt.Sprintf("%s=\"%s\", ", "oauth_signature", url.QueryEscape(sig))
-		header += fmt.Sprintf("%s=\"%s\", ", "oauth_signature_method", "HMAC-SHA1")
-		header += fmt.Sprintf("%s=\"%s\", ", "oauth_timestamp", ts)
-		header += fmt.Sprintf("%s=\"%s\", ", "oauth_token", ta.AccessToken)
-		header += fmt.Sprintf("%s=\"%s\"", "oauth_version", "1.0")
-		req.Header.Add("authorization", header)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Header.Get("X-Rate-Limit-Remaining") == "0" {
-
-		reset := resp.Header.Get("X-Rate-Limit-Reset")
-		unixTime, _ := strconv.ParseInt(reset, 0, 64)
-		resetTime := time.Unix(unixTime, 0)
-		if err != nil {
-			fmt.Println(err)
-		}
-		until := time.Until(resetTime)
-
-		fmt.Println("rate limit hit, waiting", until, "...")
-		time.Sleep(until)
-
-		return ta.Request(tar)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
 
 func NewRequest(resource string, parameters map[string]string) *TwitterAPIRequest {
 	switch resource {
@@ -190,14 +194,14 @@ func NewRequest(resource string, parameters map[string]string) *TwitterAPIReques
 		return &TwitterAPIRequest{
 			Parameters: parameters,
 			Method:     http.MethodGet,
-			EndPoint:   API_URL + resource + ".json?" + GenerateParameterString(parameters, false),
+			EndPoint:   apiURL + resource + ".json?" + GenerateParameterString(parameters, false),
 			Auth:       "oauth",
 		}
 	case "favorites/destroy":
 		return &TwitterAPIRequest{
 			Parameters: parameters,
 			Method:     http.MethodPost,
-			EndPoint:   API_URL + resource + ".json?" + GenerateParameterString(parameters, false),
+			EndPoint:   apiURL + resource + ".json?" + GenerateParameterString(parameters, false),
 			Auth:       "oauth",
 		}
 	}
