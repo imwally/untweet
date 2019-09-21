@@ -37,20 +37,31 @@ Usage of unlike:
 ### Dump all likes to stdout in json format
 
 ```
-$ unlike -consumer "xxxxxxxxx" -secret "xxxxxxxxx" -accesstoken "xxxxxxxxx" -accesstokensecret "xxxxxxxxx" -dump
+$ unlike -consumer "xxxxxxxxx" \
+        -secret "xxxxxxxxx" \
+        -accesstoken "xxxxxxxxx" \
+        -accesstokensecret "xxxxxxxxx" \
+        -dump
 ```
 
 ### Unlike only the tweets from people you don't follow
 
 ```
-$ unlike -consumer "xxxxxxxxx" -secret "xxxxxxxxx" -accesstoken "xxxxxxxxx" -accesstokensecret "xxxxxxxxx" -keepfollowing
+$ unlike -consumer "xxxxxxxxx" \
+        -secret "xxxxxxxxx" \
+        -accesstoken "xxxxxxxxx" \
+        -accesstokensecret "xxxxxxxxx" \
+        -keepfollowing
 ```
 
 ### Unlike __ALL__ tweets
 
 Please note the lack of any other arguments. Running the command with the
-required keys and without any other arguments will unlikes __all__ tweets.
+required keys and without any other arguments will unlike __all__ tweets.
 
 ```
-$ unlike -consumer "xxxxxxxxx" -secret "xxxxxxxxx" -accesstoken "xxxxxxxxx" -accesstokensecret "xxxxxxxxx"
+$ unlike -consumer "xxxxxxxxx" \
+        -secret "xxxxxxxxx" \
+        -accesstoken "xxxxxxxxx" \
+        -accesstokensecret "xxxxxxxxx"
 ```

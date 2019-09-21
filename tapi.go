@@ -196,7 +196,7 @@ func (ta *TwitterAPI) DestroyLike(id int) error {
 	params := make(map[string]string)
 	params["id"] = strconv.Itoa(id)
 
-	log.Printf("destroying tweet %d\n", id)
+	log.Printf("destroying %d\n", id)
 	req := NewRequest("favorites/destroy", params)
 
 	_, err := ta.Request(req)

@@ -82,8 +82,6 @@ func main() {
 				continue
 			}
 
-			log.Println("destroying", like.Id)
-
 			err := ta.DestroyLike(like.Id)
 			if err != nil {
 				log.Println(err)
