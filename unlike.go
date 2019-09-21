@@ -56,7 +56,7 @@ func main() {
 	}
 
 	if DumpLikes {
-		likes, err := ta.GetLikes("imwally")
+		likes, err := ta.GetLikes()
 		if err != nil {
 			fmt.Println("error:", err)
 		}
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	for max, next := 0, 1; next > 0; {
-		batch, err := ta.GetBatchedLikes("imwally", max)
+		batch, err := ta.GetBatchedLikes(max)
 		if err != nil {
 			log.Println(err)
 		}

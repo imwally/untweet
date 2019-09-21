@@ -144,10 +144,9 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 	return body, nil
 }
 
-func (ta *TwitterAPI) GetBatchedLikes(sn string, maxId int) ([]Tweet, error) {
+func (ta *TwitterAPI) GetBatchedLikes(maxId int) ([]Tweet, error) {
 	params := make(map[string]string)
 	params["include_entities"] = "true"
-	params["screen_name"] = sn
 	params["count"] = "200"
 
 	if maxId > 0 {
@@ -166,10 +165,10 @@ func (ta *TwitterAPI) GetBatchedLikes(sn string, maxId int) ([]Tweet, error) {
 	return tweets, nil
 }
 
-func (ta *TwitterAPI) GetLikes(sn string) ([]Tweet, error) {
+func (ta *TwitterAPI) GetLikes() ([]Tweet, error) {
 	var likes []Tweet
 	for max, next := 0, 1; next > 0; {
-		batch, err := ta.GetBatchedLikes(sn, max)
+		batch, err := ta.GetBatchedLikes(max)
 		if err != nil {
 			return nil, err
 		}
