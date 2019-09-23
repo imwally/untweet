@@ -58,12 +58,12 @@ func main() {
 	if DumpLikes {
 		likes, err := ta.GetLikes()
 		if err != nil {
-			fmt.Println("error:", err)
+			panic(err)
 		}
 
 		output, err := json.Marshal(likes)
 		if err != nil {
-			fmt.Println("error:", err)
+			panic(err)
 		}
 
 		fmt.Println(string(output))
