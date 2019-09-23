@@ -178,11 +178,10 @@ func (ta *TwitterAPI) GetLikes() ([]Tweet, error) {
 			likes = append(likes, like)
 		}
 
-		log.Println("gathered", len(likes), "likes")
-
 		blen := len(batch)
 		if blen > 0 {
 			max = batch[blen-1].Id - 1
+			log.Println("gathered", len(likes), "likes")
 		}
 
 		next = blen
