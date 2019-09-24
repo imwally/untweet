@@ -55,6 +55,7 @@ func main() {
 		AccessTokenSecret: AccessTokenSecret,
 	}
 
+	// If dump is specified then ONLY dump likes and disregard other flags
 	if DumpLikes {
 		likes, err := ta.GetLikes()
 		if err != nil {
@@ -70,6 +71,21 @@ func main() {
 		return
 	}
 
+	// Make sure user knows which likes will be destroyed
+	if KeepFollowing {
+		fmt.Printf("Unlike tweets from people you don't follow? [y/n] ")
+	} else {
+		fmt.Printf("Unlike ALL tweets? [y/n] ")
+	}
+
+	var proceed string
+	fmt.Scanln(&proceed)
+
+	if proceed != "y" && proceed != "Y" {
+		return
+	}
+
+	// Proceed to destroy likes in batches of 200
 	for max, next := 0, 1; next > 0; {
 		batch, err := ta.GetBatchedLikes(max)
 		if err != nil {
