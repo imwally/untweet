@@ -73,9 +73,9 @@ func main() {
 
 	// Make sure user knows which likes will be destroyed
 	if KeepFollowing {
-		fmt.Printf("Unlike tweets from people you don't follow? [y/n] ")
+		fmt.Printf("Unlike tweets from people you don't follow? [y/n]: ")
 	} else {
-		fmt.Printf("Unlike ALL tweets? [y/n] ")
+		fmt.Printf("Unlike ALL tweets? [y/n]: ")
 	}
 
 	var proceed string
