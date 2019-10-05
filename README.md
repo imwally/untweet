@@ -1,6 +1,6 @@
 # unlike
 
-A little command line utility that unlikes tweets.
+A little command line utility that unlikes all the tweets you previously liked.
 
 ## Requirements
 
