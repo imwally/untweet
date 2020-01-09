@@ -117,6 +117,10 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 		return nil, err
 	}
 
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, errors.New("error: missing or incorrect authentication credentials")
+	}
+
 	if resp.Header.Get("X-Rate-Limit-Remaining") == "0" {
 		resetHeader := resp.Header.Get("X-Rate-Limit-Reset")
 		unixTime, err := strconv.ParseInt(resetHeader, 0, 64)
