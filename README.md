@@ -58,7 +58,8 @@ $ unlike -consumer "xxxxxxxxx" \
 ### Unlike __ALL__ tweets
 
 Please note the lack of any other arguments. Running the command with the
-required keys and without any other arguments will unlike __all__ tweets.
+required keys and without any other arguments will unlike __all__ tweets. Don't
+worry, you'll be asked for confirmation.
 
 ```
 $ unlike -consumer "xxxxxxxxx" \
