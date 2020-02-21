@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/imwally/unlike/tapi"
 )
 
 var KeyConsumer string
@@ -25,9 +27,7 @@ func init() {
 	flag.BoolVar(&KeepFollowing, "keepfollowing", false, "Keep liked tweets from people you follow")
 	flag.BoolVar(&DumpLikes, "dump", false, "Dump all likes to stdout in json format")
 	flag.Parse()
-}
 
-func main() {
 	if KeySecret == "" {
 		fmt.Println("error: no secret key set")
 		os.Exit(2)
@@ -48,7 +48,10 @@ func main() {
 		os.Exit(2)
 	}
 
-	ta := &TwitterAPI{
+}
+
+func main() {
+	ta := &tapi.TwitterAPI{
 		KeyConsumer:       KeyConsumer,
 		KeySecret:         KeySecret,
 		AccessToken:       AccessToken,

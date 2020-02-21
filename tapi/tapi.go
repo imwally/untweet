@@ -1,4 +1,4 @@
-package main
+package tapi
 
 import (
 	"crypto/hmac"
@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/imwally/unlike/helpers"
 )
 
 const apiURL string = "https://api.twitter.com/1.1/"
@@ -65,7 +67,7 @@ func (ta *TwitterAPI) GenerateOauthSignature(tar *TwitterAPIRequest, nonce strin
 	baseURL, _ := url.Parse(tar.EndPoint)
 	baseURL.RawQuery = ""
 
-	baseString := GenerateParameterString(params, true)
+	baseString := helpers.GenerateParameterString(params, true)
 	baseString = tar.Method + "&" + url.QueryEscape(baseURL.String()) + "&" + url.QueryEscape(baseString)
 
 	key := url.QueryEscape(ta.KeySecret) + "&" + url.QueryEscape(ta.AccessTokenSecret)
@@ -93,7 +95,7 @@ func (ta *TwitterAPI) Request(tar *TwitterAPIRequest) ([]byte, error) {
 	}
 
 	if tar.Auth == "oauth" {
-		nonce, err := GenerateNonce()
+		nonce, err := helpers.GenerateNonce()
 		if err != nil {
 			return nil, err
 		}
@@ -215,14 +217,14 @@ func NewRequest(resource string, parameters map[string]string) *TwitterAPIReques
 		return &TwitterAPIRequest{
 			Parameters: parameters,
 			Method:     http.MethodGet,
-			EndPoint:   apiURL + resource + ".json?" + GenerateParameterString(parameters, false),
+			EndPoint:   apiURL + resource + ".json?" + helpers.GenerateParameterString(parameters, false),
 			Auth:       "oauth",
 		}
 	case "favorites/destroy":
 		return &TwitterAPIRequest{
 			Parameters: parameters,
 			Method:     http.MethodPost,
-			EndPoint:   apiURL + resource + ".json?" + GenerateParameterString(parameters, false),
+			EndPoint:   apiURL + resource + ".json?" + helpers.GenerateParameterString(parameters, false),
 			Auth:       "oauth",
 		}
 	}
