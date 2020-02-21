@@ -10,56 +10,57 @@ import (
 	"github.com/imwally/unlike/tapi"
 )
 
-var KeyConsumer string
-var KeySecret string
-var AccessToken string
-var AccessTokenSecret string
+var (
+	keyConsumer       string
+	keySecret         string
+	accessToken       string
+	accessTokenSecret string
 
-var KeepFollowing bool
-var DumpLikes bool
+	keepFollowing bool
+	dumpLikes     bool
+)
 
 func init() {
-	flag.StringVar(&KeyConsumer, "consumer", "", "Twitter API Consumer Key")
-	flag.StringVar(&KeySecret, "secret", "", "Twitter API Secret Key")
-	flag.StringVar(&AccessToken, "accesstoken", "", "Twitter API Access Token")
-	flag.StringVar(&AccessTokenSecret, "accesstokensecret", "", "Twitter API Access Token Secret")
+	flag.StringVar(&keyConsumer, "consumer", "", "Twitter API Consumer Key")
+	flag.StringVar(&keySecret, "secret", "", "Twitter API Secret Key")
+	flag.StringVar(&accessToken, "accesstoken", "", "Twitter API Access Token")
+	flag.StringVar(&accessTokenSecret, "accesstokensecret", "", "Twitter API Access Token Secret")
 
-	flag.BoolVar(&KeepFollowing, "keepfollowing", false, "Keep liked tweets from people you follow")
-	flag.BoolVar(&DumpLikes, "dump", false, "Dump all likes to stdout in json format")
+	flag.BoolVar(&keepFollowing, "keepfollowing", false, "Don't unlike any tweets from people you follow")
+	flag.BoolVar(&dumpLikes, "dump", false, "Dump all likes to stdout in json format")
 	flag.Parse()
-
-	if KeySecret == "" {
-		fmt.Println("error: no secret key set")
-		os.Exit(2)
-	}
-
-	if KeyConsumer == "" {
-		fmt.Println("error: no consumer key set")
-		os.Exit(2)
-	}
-
-	if AccessToken == "" {
-		fmt.Println("error: no access token set")
-		os.Exit(2)
-	}
-
-	if AccessTokenSecret == "" {
-		fmt.Println("error: no access token secret set")
-		os.Exit(2)
-	}
-
 }
 
 func main() {
+	if keySecret == "" {
+		fmt.Fprintf(os.Stderr, "error: no secret key set\n")
+		os.Exit(2)
+	}
+
+	if keyConsumer == "" {
+		fmt.Fprintf(os.Stderr, "error: no consumer key set\n")
+		os.Exit(2)
+	}
+
+	if accessToken == "" {
+		fmt.Fprintf(os.Stderr, "error: no access token set\n")
+		os.Exit(2)
+	}
+
+	if accessTokenSecret == "" {
+		fmt.Fprintf(os.Stderr, "error: no access token secret set\n")
+		os.Exit(2)
+	}
+
 	ta := &tapi.TwitterAPI{
-		KeyConsumer:       KeyConsumer,
-		KeySecret:         KeySecret,
-		AccessToken:       AccessToken,
-		AccessTokenSecret: AccessTokenSecret,
+		KeyConsumer:       keyConsumer,
+		KeySecret:         keySecret,
+		AccessToken:       accessToken,
+		AccessTokenSecret: accessTokenSecret,
 	}
 
 	// If dump is specified then ONLY dump likes and disregard other flags
-	if DumpLikes {
+	if dumpLikes {
 		likes, err := ta.GetLikes()
 		if err != nil {
 			log.Println(err)
@@ -75,7 +76,7 @@ func main() {
 	}
 
 	// Make sure user knows which likes will be destroyed
-	if KeepFollowing {
+	if keepFollowing {
 		fmt.Printf("Unlike tweets from people you don't follow? [y/n]: ")
 	} else {
 		fmt.Printf("Unlike ALL tweets? [y/n]: ")
@@ -96,7 +97,7 @@ func main() {
 		}
 
 		for _, like := range batch {
-			if KeepFollowing && like.Following {
+			if keepFollowing && like.Following {
 				log.Println("keeping", like.Id)
 				continue
 			}
