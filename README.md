@@ -40,8 +40,8 @@ Usage of unlike:
 ```
 $ unlike -consumer "xxxxxxxxx" \
         -secret "xxxxxxxxx" \
-        -accesstoken "xxxxxxxxx" \
-        -accesstokensecret "xxxxxxxxx" \
+        -access-token "xxxxxxxxx" \
+        -access-token-secret "xxxxxxxxx" \
         -dump
 ```
 
@@ -50,9 +50,9 @@ $ unlike -consumer "xxxxxxxxx" \
 ```
 $ unlike -consumer "xxxxxxxxx" \
         -secret "xxxxxxxxx" \
-        -accesstoken "xxxxxxxxx" \
-        -accesstokensecret "xxxxxxxxx" \
-        -keepfollowing
+        -access-token "xxxxxxxxx" \
+        -access-token-secret "xxxxxxxxx" \
+        -keep-following
 ```
 
 ### Unlike __ALL__ tweets
@@ -64,6 +64,6 @@ worry, you'll be asked for confirmation.
 ```
 $ unlike -consumer "xxxxxxxxx" \
         -secret "xxxxxxxxx" \
-        -accesstoken "xxxxxxxxx" \
-        -accesstokensecret "xxxxxxxxx"
+        -access-token "xxxxxxxxx" \
+        -access-token-secret "xxxxxxxxx"
 ```
