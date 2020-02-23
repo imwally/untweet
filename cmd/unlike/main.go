@@ -23,10 +23,10 @@ var (
 func init() {
 	flag.StringVar(&keyConsumer, "consumer", "", "Twitter API Consumer Key")
 	flag.StringVar(&keySecret, "secret", "", "Twitter API Secret Key")
-	flag.StringVar(&accessToken, "accesstoken", "", "Twitter API Access Token")
-	flag.StringVar(&accessTokenSecret, "accesstokensecret", "", "Twitter API Access Token Secret")
+	flag.StringVar(&accessToken, "access-token", "", "Twitter API Access Token")
+	flag.StringVar(&accessTokenSecret, "access-token-secret", "", "Twitter API Access Token Secret")
 
-	flag.BoolVar(&keepFollowing, "keepfollowing", false, "Don't unlike any tweets from people you follow")
+	flag.BoolVar(&keepFollowing, "keep-following", false, "Don't unlike any tweets from people you follow")
 	flag.BoolVar(&dumpLikes, "dump", false, "Dump all likes to stdout in json format")
 	flag.Parse()
 }

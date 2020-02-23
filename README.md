@@ -21,15 +21,15 @@ The 4 keys from above are required for every call to `unlike`.
 
 ```
 Usage of unlike:
-  -accesstoken string
+  -access-token string
         Twitter API Access Token
-  -accesstokensecret string
+  -access-token-secret string
         Twitter API Access Token Secret
   -consumer string
         Twitter API Consumer Key
   -dump
         Dump all likes to stdout in json format
-  -keepfollowing
+  -keep-following
         Keep liked tweets from people you follow
   -secret string
         Twitter API Secret Key
