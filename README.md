@@ -17,22 +17,30 @@ portal](https://developer.twitter.com/en/docs/basics/getting-started).
 
 ## How to Use
 
-The 4 keys from above are required for every call to `unlike`. 
+The 4 keys from above are required for every call to
+`unlike`. Environment variables are also supported:
 
 ```
-Usage of unlike:
-  -access-token string
-        Twitter API Access Token
-  -access-token-secret string
-        Twitter API Access Token Secret
-  -consumer string
-        Twitter API Consumer Key
+TWITTER_API_KEY
+TWITTER_API_KEY_SECRET
+TWITTER_TOKEN
+TWITTER_TOKEN_SECRET
+```
+
+```
+Usage of ./unlike:
   -dump
         Dump all likes to stdout in json format
   -keep-following
-        Keep liked tweets from people you follow
-  -secret string
+        Don't unlike any tweets from people you follow
+  -key string
+        Twitter API Consumer Key
+  -key-secret string
         Twitter API Secret Key
+  -token string
+        Twitter API Access Token
+  -token-secret string
+        Twitter API Access Token Secret
 ```
 
 ### Dump all likes to stdout in json format

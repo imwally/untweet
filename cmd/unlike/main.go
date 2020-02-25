@@ -11,20 +11,20 @@ import (
 )
 
 var (
-	keyConsumer       string
-	keySecret         string
-	accessToken       string
-	accessTokenSecret string
+	key         string
+	keySecret   string
+	token       string
+	tokenSecret string
 
 	keepFollowing bool
 	dumpLikes     bool
 )
 
 func init() {
-	flag.StringVar(&keyConsumer, "consumer", "", "Twitter API Consumer Key")
-	flag.StringVar(&keySecret, "secret", "", "Twitter API Secret Key")
-	flag.StringVar(&accessToken, "access-token", "", "Twitter API Access Token")
-	flag.StringVar(&accessTokenSecret, "access-token-secret", "", "Twitter API Access Token Secret")
+	flag.StringVar(&key, "key", "", "Twitter API Consumer Key")
+	flag.StringVar(&keySecret, "key-secret", "", "Twitter API Secret Key")
+	flag.StringVar(&token, "token", "", "Twitter API Access Token")
+	flag.StringVar(&tokenSecret, "token-secret", "", "Twitter API Access Token Secret")
 
 	flag.BoolVar(&keepFollowing, "keep-following", false, "Don't unlike any tweets from people you follow")
 	flag.BoolVar(&dumpLikes, "dump", false, "Dump all likes to stdout in json format")
@@ -32,31 +32,40 @@ func init() {
 }
 
 func main() {
+
+	if key == "" {
+		if key = os.Getenv("TWITTER_API_KEY"); key == "" {
+			fmt.Fprintf(os.Stderr, "error: no api key set\n")
+			os.Exit(2)
+		}
+	}
+
 	if keySecret == "" {
-		fmt.Fprintf(os.Stderr, "error: no secret key set\n")
-		os.Exit(2)
+		if keySecret = os.Getenv("TWITTER_API_KEY_SECRET"); keySecret == "" {
+			fmt.Fprintf(os.Stderr, "error: no secret key set\n")
+			os.Exit(2)
+		}
 	}
 
-	if keyConsumer == "" {
-		fmt.Fprintf(os.Stderr, "error: no consumer key set\n")
-		os.Exit(2)
+	if token == "" {
+		if token = os.Getenv("TWITTER_API_TOKEN"); token == "" {
+			fmt.Fprintf(os.Stderr, "error: no access token set\n")
+			os.Exit(2)
+		}
 	}
 
-	if accessToken == "" {
-		fmt.Fprintf(os.Stderr, "error: no access token set\n")
-		os.Exit(2)
-	}
-
-	if accessTokenSecret == "" {
-		fmt.Fprintf(os.Stderr, "error: no access token secret set\n")
-		os.Exit(2)
+	if tokenSecret == "" {
+		if tokenSecret = os.Getenv("TWITTER_API_TOKEN_SECRET"); tokenSecret == "" {
+			fmt.Fprintf(os.Stderr, "error: no access token secret set\n")
+			os.Exit(2)
+		}
 	}
 
 	ta := &tapi.TwitterAPI{
-		KeyConsumer:       keyConsumer,
+		KeyConsumer:       key,
 		KeySecret:         keySecret,
-		AccessToken:       accessToken,
-		AccessTokenSecret: accessTokenSecret,
+		AccessToken:       token,
+		AccessTokenSecret: tokenSecret,
 	}
 
 	// If dump is specified then ONLY dump likes and disregard other flags
