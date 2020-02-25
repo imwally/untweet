@@ -3,6 +3,10 @@
 A little command line utility that unlikes all (or some of) the tweets you
 previously liked.
 
+## Install
+
+`go get -u github.com/imwally/unlike/cmd/unlike`
+
 ## Requirements
 
 To communicate with Twitter's API you will need the following:
