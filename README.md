@@ -46,21 +46,13 @@ Usage of ./unlike:
 ### Dump all likes to stdout in json format
 
 ```
-$ unlike -consumer "xxxxxxxxx" \
-        -secret "xxxxxxxxx" \
-        -access-token "xxxxxxxxx" \
-        -access-token-secret "xxxxxxxxx" \
-        -dump
+$ unlike -dump
 ```
 
 ### Unlike only the tweets from people you don't follow
 
 ```
-$ unlike -consumer "xxxxxxxxx" \
-        -secret "xxxxxxxxx" \
-        -access-token "xxxxxxxxx" \
-        -access-token-secret "xxxxxxxxx" \
-        -keep-following
+$ unlike -keep-following
 ```
 
 ### Unlike __ALL__ tweets
@@ -70,8 +62,5 @@ required keys and without any other arguments will unlike __all__ tweets. Don't
 worry, you'll be asked for confirmation.
 
 ```
-$ unlike -consumer "xxxxxxxxx" \
-        -secret "xxxxxxxxx" \
-        -access-token "xxxxxxxxx" \
-        -access-token-secret "xxxxxxxxx"
+$ unlike
 ```
