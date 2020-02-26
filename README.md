@@ -5,6 +5,14 @@ previously liked.
 
 ## Install
 
+### Binaries
+
+Check out the [latest
+release](https://github.com/imwally/unlike/releases/latest) for macOS
+and Linux binaries.
+
+### Go
+
 `go get -u github.com/imwally/unlike/cmd/unlike`
 
 ## Requirements
