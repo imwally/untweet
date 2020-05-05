@@ -1,7 +1,6 @@
-# unlike
+# untweet
 
-A little command line utility that unlikes all (or some of) the tweets you
-previously liked.
+A little command line utility that destroys likes and tweets.
 
 ## Install
 
@@ -40,39 +39,41 @@ TWITTER_API_TOKEN_SECRET
 ```
 
 ```
-Usage of ./unlike:
-  -dump
-        Dump all likes to stdout in json format
+Usage of untweet:
+  -destroy-likes
+    	Destroy your likes
+  -destroy-tweets
+    	Destroy your tweets
+  -dump-likes
+    	Dump all likes to stdout in json format
+  -dump-tweets
+    	Dump all of your tweets to stdout in json format
   -keep-following
-        Don't unlike any tweets from people you follow
+    	Don't destroy likes of tweets from people you follow
   -key string
-        Twitter API Consumer Key
+    	Twitter API Consumer Key
   -key-secret string
-        Twitter API Secret Key
+    	Twitter API Secret Key
   -token string
-        Twitter API Access Token
+    	Twitter API Access Token
   -token-secret string
-        Twitter API Access Token Secret
+    	Twitter API Access Token Secret
 ```
 
-### Dump all likes to stdout in json format
+## Backup Before You Destroy
+
+### Dump all likes or tweets to stdout in json format
 
 ```
-$ unlike -dump
+$ untweet -dump-likes
 ```
 
-### Unlike only the tweets from people you don't follow
-
 ```
-$ unlike -keep-following
+$ untweet -dump-tweets
 ```
 
-### Unlike __ALL__ tweets
-
-Please note the lack of any other arguments. Running the command with the
-required keys and without any other arguments will unlike __all__ tweets. Don't
-worry, you'll be asked for confirmation.
+### Keep likes of people you follow
 
 ```
-$ unlike
+$ untweet -destroy-likes -keep-following
 ```

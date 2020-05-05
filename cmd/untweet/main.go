@@ -29,7 +29,7 @@ func init() {
 	flag.StringVar(&token, "token", "", "Twitter API Access Token")
 	flag.StringVar(&tokenSecret, "token-secret", "", "Twitter API Access Token Secret")
 
-	flag.BoolVar(&keepFollowing, "keep-following", false, "Don't destroy likes of people you follow")
+	flag.BoolVar(&keepFollowing, "keep-following", false, "Don't destroy likes of tweets from people you follow")
 	flag.BoolVar(&destroyLikes, "destroy-likes", false, "Destroy your likes")
 	flag.BoolVar(&dumpLikes, "dump-likes", false, "Dump all likes to stdout in json format")
 
