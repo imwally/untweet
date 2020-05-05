@@ -7,12 +7,12 @@ A little command line utility that destroys likes and tweets.
 ### Binaries
 
 Check out the [latest
-release](https://github.com/imwally/unlike/releases/latest) for macOS
+release](https://github.com/imwally/untweet/releases/latest) for macOS
 and Linux binaries.
 
 ### Go
 
-`go get -u github.com/imwally/unlike/cmd/unlike`
+`go get -u github.com/imwally/untweet/cmd/untweet`
 
 ## Requirements
 
