@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/imwally/unlike/helpers"
+	"github.com/imwally/untweet/helpers"
 )
 
 const apiURL string = "https://api.twitter.com/1.1/"
@@ -31,6 +31,7 @@ type Tweet struct {
 	CreatedAt string `json:"created_at"`
 	Id        int    `json:"id"`
 	User      `json:"user"`
+	Text      string `json:"text"`
 	URL       string
 }
 
@@ -171,6 +172,52 @@ func (ta *TwitterAPI) GetBatchedLikes(maxId int) ([]Tweet, error) {
 	return tweets, nil
 }
 
+func (ta *TwitterAPI) GetBatchedTweets(maxId int) ([]Tweet, error) {
+	params := make(map[string]string)
+	params["include_rts"] = "true"
+	params["count"] = "200"
+
+	if maxId > 0 {
+		params["max_id"] = strconv.Itoa(maxId)
+	}
+
+	req := NewRequest("statuses/user_timeline", params)
+	resp, err := ta.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var tweets []Tweet
+	json.Unmarshal(resp, &tweets)
+
+	return tweets, nil
+}
+
+func (ta *TwitterAPI) GetTweets() ([]Tweet, error) {
+	var tweets []Tweet
+	for max, next := 0, 1; next > 0; {
+		batch, err := ta.GetBatchedTweets(max)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, tweet := range batch {
+			tweet.URL = fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.ScreenName, tweet.Id)
+			tweets = append(tweets, tweet)
+		}
+
+		blen := len(batch)
+		if blen > 0 {
+			max = batch[blen-1].Id - 1
+			log.Println("gathered", len(tweets), "tweets")
+		}
+
+		next = blen
+	}
+
+	return tweets, nil
+}
+
 func (ta *TwitterAPI) GetLikes() ([]Tweet, error) {
 	var likes []Tweet
 	for max, next := 0, 1; next > 0; {
@@ -211,6 +258,21 @@ func (ta *TwitterAPI) DestroyLike(id int) error {
 	return nil
 }
 
+func (ta *TwitterAPI) DestroyTweet(id int) error {
+	params := make(map[string]string)
+	params["id"] = strconv.Itoa(id)
+
+	log.Printf("destroying %d\n", id)
+	req := NewRequest("statuses/destroy", params)
+
+	_, err := ta.Request(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func NewRequest(resource string, parameters map[string]string) *TwitterAPIRequest {
 	switch resource {
 	case "favorites/list":
@@ -224,6 +286,20 @@ func NewRequest(resource string, parameters map[string]string) *TwitterAPIReques
 		return &TwitterAPIRequest{
 			Parameters: parameters,
 			Method:     http.MethodPost,
+			EndPoint:   apiURL + resource + ".json?" + helpers.GenerateParameterString(parameters, false),
+			Auth:       "oauth",
+		}
+	case "statuses/destroy":
+		return &TwitterAPIRequest{
+			Parameters: parameters,
+			Method:     http.MethodPost,
+			EndPoint:   apiURL + resource + ".json?" + helpers.GenerateParameterString(parameters, false),
+			Auth:       "oauth",
+		}
+	case "statuses/user_timeline":
+		return &TwitterAPIRequest{
+			Parameters: parameters,
+			Method:     http.MethodGet,
 			EndPoint:   apiURL + resource + ".json?" + helpers.GenerateParameterString(parameters, false),
 			Auth:       "oauth",
 		}

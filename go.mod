@@ -1,3 +1,3 @@
-module github.com/imwally/unlike
+module github.com/imwally/untweet
 
-go 1.13
+go 1.14
