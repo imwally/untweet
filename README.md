@@ -29,7 +29,7 @@ portal](https://developer.twitter.com/en/docs/basics/getting-started).
 ## How to Use
 
 The 4 keys from above are required for every call to
-`unlike`. Environment variables are also supported:
+`untweet`. Environment variables are also supported:
 
 ```
 TWITTER_API_KEY
