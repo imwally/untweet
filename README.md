@@ -71,11 +71,11 @@ OPTIONS:
 ### Dump all likes or tweets to stdout in json format
 
 ```
-$ untweet -likes
+$ untweet likes
 ```
 
 ```
-$ untweet -tweets
+$ untweet tweets
 ```
 
 ## Other Useful Information
