@@ -38,18 +38,9 @@ TWITTER_API_TOKEN
 TWITTER_API_TOKEN_SECRET
 ```
 
+or use command line flags:
+
 ```
-Usage of untweet:
-  -destroy-likes
-    	Destroy your likes
-  -destroy-tweets
-    	Destroy your tweets
-  -dump-likes
-    	Dump all likes to stdout in json format
-  -dump-tweets
-    	Dump all of your tweets to stdout in json format
-  -keep-following
-    	Don't destroy likes of tweets from people you follow
   -key string
     	Twitter API Consumer Key
   -key-secret string
@@ -60,20 +51,37 @@ Usage of untweet:
     	Twitter API Access Token Secret
 ```
 
+### Usage
+
+```
+USAGE:
+    untweet command [command options]
+
+COMMAND:
+    dump         Dump likes or tweets
+    tweets       Destroy tweets
+    likes        Destroy likes
+
+OPTIONS:
+    Use -h on each command to view options
+```
+
 ## Backup Before You Destroy
 
 ### Dump all likes or tweets to stdout in json format
 
 ```
-$ untweet -dump-likes
+$ untweet -likes
 ```
 
 ```
-$ untweet -dump-tweets
+$ untweet -tweets
 ```
 
-### Keep likes of people you follow
+## Other Useful Information
+
+### Keep likes of tweets from people you follow
 
 ```
-$ untweet -destroy-likes -keep-following
+$ untweet likes -keep-following
 ```
