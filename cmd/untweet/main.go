@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/imwally/untweet/tapi"
 )
@@ -17,10 +18,7 @@ var (
 	tokenSecret string
 
 	keepFollowing bool
-	destroyTweets bool
-	destroyLikes  bool
-	dumpLikes     bool
-	dumpTweets    bool
+	older         string
 )
 
 func init() {
@@ -28,17 +26,34 @@ func init() {
 	flag.StringVar(&keySecret, "key-secret", "", "Twitter API Secret Key")
 	flag.StringVar(&token, "token", "", "Twitter API Access Token")
 	flag.StringVar(&tokenSecret, "token-secret", "", "Twitter API Access Token Secret")
-
-	flag.BoolVar(&keepFollowing, "keep-following", false, "Don't destroy likes of tweets from people you follow")
-	flag.BoolVar(&destroyLikes, "destroy-likes", false, "Destroy your likes")
-	flag.BoolVar(&dumpLikes, "dump-likes", false, "Dump all likes to stdout in json format")
-
-	flag.BoolVar(&destroyTweets, "destroy-tweets", false, "Destroy your tweets")
-	flag.BoolVar(&dumpTweets, "dump-tweets", false, "Dump all of your tweets to stdout in json format")
 	flag.Parse()
 }
 
 func main() {
+	tweetsCmd := flag.NewFlagSet("tweets", flag.ExitOnError)
+	tweetsOlder := tweetsCmd.Duration("older", time.Second*0, "Destroy tweets older than this time (30m, 24h, 48h, etc..)")
+
+	likesCmd := flag.NewFlagSet("likes", flag.ExitOnError)
+	keepFollowing := likesCmd.Bool("keep-following", false, "Don't destroy likes of tweets from people you follow")
+
+	dumpCmd := flag.NewFlagSet("dump", flag.ExitOnError)
+	dumpLikes := dumpCmd.Bool("likes", false, "Dump likes")
+	dumpTweets := dumpCmd.Bool("tweets", false, "Dump tweets")
+
+	if len(os.Args) < 2 {
+		fmt.Println("USAGE:")
+		fmt.Printf("    %s command [command options]\n\n", os.Args[0])
+
+		fmt.Println("COMMAND:")
+		fmt.Printf("    dump \t Dump likes or tweets\n")
+		fmt.Printf("    tweets \t Destroy tweets\n")
+		fmt.Printf("    likes \t Destroy likes\n\n")
+
+		fmt.Println("OPTIONS:")
+		fmt.Println("    Use -h on each command to view options")
+		return
+	}
+
 	if key == "" {
 		if key = os.Getenv("TWITTER_API_KEY"); key == "" {
 			fmt.Fprintf(os.Stderr, "error: no api key set\n")
@@ -74,41 +89,43 @@ func main() {
 		AccessTokenSecret: tokenSecret,
 	}
 
-	// If dump-likes is specified then ONLY dump likes and disregard other flags
-	if dumpLikes {
-		likes, err := ta.GetLikes()
-		if err != nil {
-			log.Println(err)
+	switch os.Args[1] {
+	case "dump":
+		dumpCmd.Parse(os.Args[2:])
+
+		if *dumpLikes {
+			likes, err := ta.GetLikes()
+			if err != nil {
+				log.Println(err)
+			}
+
+			output, err := json.Marshal(likes)
+			if err != nil {
+				log.Println(err)
+			}
+
+			fmt.Println(string(output))
+
 		}
 
-		output, err := json.Marshal(likes)
-		if err != nil {
-			log.Println(err)
+		if *dumpTweets {
+			tweets, err := ta.GetTweets()
+			if err != nil {
+				log.Println(err)
+			}
+
+			output, err := json.Marshal(tweets)
+			if err != nil {
+				log.Println(err)
+			}
+
+			fmt.Println(string(output))
 		}
 
-		fmt.Println(string(output))
-		return
-	}
+	case "tweets":
+		tweetsCmd.Parse(os.Args[2:])
 
-	// If dump-tweets is specified then ONLY dump tweets and disregard other flags
-	if dumpTweets {
-		likes, err := ta.GetTweets()
-		if err != nil {
-			log.Println(err)
-		}
-
-		output, err := json.Marshal(likes)
-		if err != nil {
-			log.Println(err)
-		}
-
-		fmt.Println(string(output))
-		return
-	}
-
-	// Destroy all the tweets
-	if destroyTweets {
-		fmt.Printf("Destroy all of your tweets? [y/n]: ")
+		fmt.Printf("Destroy all of your tweets older than %s? [y/N]: ", *tweetsOlder)
 
 		var proceed string
 		fmt.Scanln(&proceed)
@@ -124,9 +141,17 @@ func main() {
 			}
 
 			for _, tweet := range batch {
-				err := ta.DestroyTweet(tweet.Id)
+				tweetTime, err := time.Parse("Mon Jan 2 15:04:05 -0700 2006", tweet.CreatedAt)
 				if err != nil {
 					log.Println(err)
+				}
+
+				// Destroy tweets older than specified time
+				if time.Since(tweetTime) > *tweetsOlder {
+					err := ta.DestroyTweet(tweet.Id)
+					if err != nil {
+						log.Println(err)
+					}
 				}
 			}
 
@@ -137,15 +162,14 @@ func main() {
 
 			next = blen
 		}
-	}
 
-	// Destroy all the likes
-	if destroyLikes {
-		// Make sure user knows which likes will be destroyed
-		if keepFollowing {
-			fmt.Printf("Unlike tweets from people you don't follow? [y/n]: ")
+	case "likes":
+		likesCmd.Parse(os.Args[2:])
+
+		if *keepFollowing {
+			fmt.Printf("Unlike tweets from people you don't follow? [y/N]: ")
 		} else {
-			fmt.Printf("Unlike ALL tweets? [y/n]: ")
+			fmt.Printf("Unlike ALL tweets? [y/N]: ")
 		}
 
 		var proceed string
@@ -155,7 +179,6 @@ func main() {
 			return
 		}
 
-		// Proceed to destroy likes in batches of 200
 		for max, next := 0, 1; next > 0; {
 			batch, err := ta.GetBatchedLikes(max)
 			if err != nil {
@@ -163,7 +186,7 @@ func main() {
 			}
 
 			for _, like := range batch {
-				if keepFollowing && like.Following {
+				if *keepFollowing && like.Following {
 					log.Println("keeping", like.Id)
 					continue
 				}
