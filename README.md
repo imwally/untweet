@@ -68,19 +68,19 @@ OPTIONS:
 
 ## Backup Before You Destroy
 
-### Dump all likes or tweets to stdout in json format
+Dump all likes or tweets to stdout in json format:
 
 ```
-$ untweet likes
+$ untweet dump -likes
 ```
 
 ```
-$ untweet tweets
+$ untweet dump -tweets
 ```
 
 ## Other Useful Information
 
-### Keep likes of tweets from people you follow
+Keep likes of tweets from people you follow:
 
 ```
 $ untweet likes -keep-following
