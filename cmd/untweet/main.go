@@ -40,7 +40,7 @@ func main() {
 	dumpLikes := dumpCmd.Bool("likes", false, "Dump likes")
 	dumpTweets := dumpCmd.Bool("tweets", false, "Dump tweets")
 
-	if len(os.Args) < 2 {
+	if len(os.Args) < 2 || os.Args[1] == "help" {
 		fmt.Println("USAGE:")
 		fmt.Printf("    %s command [command options]\n\n", os.Args[0])
 
@@ -51,6 +51,7 @@ func main() {
 
 		fmt.Println("OPTIONS:")
 		fmt.Println("    Use -h on each command to view options")
+
 		return
 	}
 
