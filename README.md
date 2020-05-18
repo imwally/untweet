@@ -85,3 +85,17 @@ Keep likes of tweets from people you follow:
 ```
 $ untweet likes -keep-following
 ```
+
+Destroy tweets older than a certain time (from now):
+
+__1 week__
+```
+$ untweet tweets -older 168h
+```
+
+__48 hours__
+```
+$ untweet tweets -older 48h
+```
+
+Checkout Go's [time package](https://golang.org/pkg/time/#ParseDuration) for more valid duration strings.
