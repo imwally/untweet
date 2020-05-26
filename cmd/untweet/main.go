@@ -42,7 +42,7 @@ func main() {
 
 	if len(os.Args) < 2 || os.Args[1] == "help" {
 		fmt.Println("USAGE:")
-		fmt.Printf("    %s command [command options]\n\n", os.Args[0])
+		fmt.Printf("    untweet command [command options]\n\n")
 
 		fmt.Println("COMMAND:")
 		fmt.Printf("    dump \t Dump likes or tweets\n")
