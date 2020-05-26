@@ -32,9 +32,11 @@ func init() {
 func main() {
 	tweetsCmd := flag.NewFlagSet("tweets", flag.ExitOnError)
 	tweetsOlder := tweetsCmd.Duration("older", time.Second*0, "Destroy tweets older than this time (30m, 24h, 48h, etc..)")
+	tweetsAutoYes := tweetsCmd.Bool("y", false, "Automatic yes to prompts")
 
 	likesCmd := flag.NewFlagSet("likes", flag.ExitOnError)
 	keepFollowing := likesCmd.Bool("keep-following", false, "Don't destroy likes of tweets from people you follow")
+	likesAutoYes := likesCmd.Bool("y", false, "Automatic yes to prompts")
 
 	dumpCmd := flag.NewFlagSet("dump", flag.ExitOnError)
 	dumpLikes := dumpCmd.Bool("likes", false, "Dump likes")
@@ -126,13 +128,15 @@ func main() {
 	case "tweets":
 		tweetsCmd.Parse(os.Args[2:])
 
-		fmt.Printf("Destroy all of your tweets older than %s? [y/N]: ", *tweetsOlder)
+		if !*tweetsAutoYes {
+			fmt.Printf("Destroy all of your tweets older than %s? [y/N]: ", *tweetsOlder)
 
-		var proceed string
-		fmt.Scanln(&proceed)
+			var proceed string
+			fmt.Scanln(&proceed)
 
-		if proceed != "y" && proceed != "Y" {
-			return
+			if proceed != "y" && proceed != "Y" {
+				return
+			}
 		}
 
 		for max, next := 0, 1; next > 0; {
@@ -167,17 +171,19 @@ func main() {
 	case "likes":
 		likesCmd.Parse(os.Args[2:])
 
-		if *keepFollowing {
-			fmt.Printf("Unlike tweets from people you don't follow? [y/N]: ")
-		} else {
-			fmt.Printf("Unlike ALL tweets? [y/N]: ")
-		}
+		if !*likesAutoYes {
+			if *keepFollowing {
+				fmt.Printf("Unlike tweets from people you don't follow? [y/N]: ")
+			} else {
+				fmt.Printf("Unlike ALL tweets? [y/N]: ")
+			}
 
-		var proceed string
-		fmt.Scanln(&proceed)
+			var proceed string
+			fmt.Scanln(&proceed)
 
-		if proceed != "y" && proceed != "Y" {
-			return
+			if proceed != "y" && proceed != "Y" {
+				return
+			}
 		}
 
 		for max, next := 0, 1; next > 0; {
